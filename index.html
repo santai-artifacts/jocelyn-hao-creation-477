@@ -3,349 +3,180 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Broadway NYC — Shows & Theater Map</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>Broadway NYC – Shows & Theater Map</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:          #0b0b11;
-      --panel:       #0f0f18;
-      --card:        #16161f;
-      --border:      #252535;
-      --gold:        #c9a84c;
-      --gold-dim:    #a07f30;
-      --text:        #f0f0f5;
-      --muted:       #7a7a94;
-      --subtle:      #aaaabc;
+      --bg:        #0b0b13;
+      --surface:   #12121e;
+      --surface2:  #191928;
+      --border:    rgba(255,255,255,0.07);
+      --gold:      #D4AF37;
+      --gold-lt:   #F0D060;
+      --text:      #ddddf0;
+      --muted:     #686888;
+      --sidebar:   360px;
     }
 
-    html, body {
-      height: 100%;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+    html, body { height: 100%; overflow: hidden; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); }
 
-    body {
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    /* ── Header ─────────────────────────────────────── */
+    /* ── Header ── */
     header {
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 24px;
-      background: linear-gradient(135deg, #0b0b11 0%, #14102a 100%);
-      border-bottom: 1px solid rgba(201,168,76,0.25);
-      z-index: 200;
+      position: fixed; top: 0; left: 0; right: 0; height: 58px; z-index: 1000;
+      background: linear-gradient(105deg, #130228 0%, #27091c 55%, #140505 100%);
+      border-bottom: 1px solid rgba(212,175,55,0.18);
+      display: flex; align-items: center; justify-content: space-between; padding: 0 22px;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-mark { font-size: 26px; }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gold-lt); letter-spacing: -0.01em; }
+    .logo-text span { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; font-style: normal; color: var(--muted); margin-left: 8px; letter-spacing: 0; }
+    .header-note {
+      font-size: 11px; color: var(--muted);
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px; padding: 4px 14px;
     }
 
-    .hd-left { display: flex; align-items: center; gap: 14px; }
-    .hd-icon { font-size: 30px; line-height: 1; }
+    /* ── Layout ── */
+    .app { display: flex; height: 100vh; padding-top: 58px; }
 
-    .hd-title h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1.5rem;
-      color: var(--gold);
-      letter-spacing: 0.02em;
-      line-height: 1.15;
-    }
-    .hd-title p {
-      font-size: 0.7rem;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-top: 2px;
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar); flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; overflow: hidden;
     }
 
-    .hd-right {
-      text-align: right;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-    .hd-right strong {
-      display: block;
-      font-family: 'Playfair Display', serif;
-      font-size: 1.4rem;
-      color: var(--gold);
-      line-height: 1;
-    }
-    .hd-right .notice {
-      font-size: 0.62rem;
-      color: #555570;
-      margin-top: 3px;
-    }
+    .sb-top { padding: 14px 14px 12px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 
-    /* ── Main layout ─────────────────────────────────── */
-    .layout {
-      display: grid;
-      grid-template-columns: 390px 1fr;
-      flex: 1;
-      overflow: hidden;
-    }
+    .count-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px; }
 
-    /* ── Side panel ──────────────────────────────────── */
-    .side {
-      display: flex;
-      flex-direction: column;
-      background: var(--panel);
-      border-right: 1px solid var(--border);
-      overflow: hidden;
-    }
-
-    .controls {
-      flex-shrink: 0;
-      padding: 14px 16px 12px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .search-row {
-      position: relative;
-      margin-bottom: 11px;
-    }
-    .search-row svg {
-      position: absolute;
-      left: 11px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted);
-      pointer-events: none;
-    }
-    input[type="text"] {
-      width: 100%;
-      background: var(--card);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 9px 12px 9px 36px;
-      border-radius: 8px;
-      font-size: 0.85rem;
-      font-family: 'Inter', sans-serif;
-      outline: none;
+    .search-wrap { position: relative; margin-bottom: 10px; }
+    .search-wrap svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .search-wrap input {
+      width: 100%; padding: 9px 10px 9px 32px;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 13px; font-family: inherit; outline: none;
       transition: border-color 0.2s;
     }
-    input[type="text"]::placeholder { color: var(--muted); }
-    input[type="text"]:focus { border-color: var(--gold); }
+    .search-wrap input:focus { border-color: rgba(212,175,55,0.35); }
+    .search-wrap input::placeholder { color: var(--muted); }
 
-    .chips {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-    }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
     .chip {
-      padding: 5px 12px;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all 0.18s;
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+      cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .chip:hover { border-color: var(--gold); color: var(--gold); }
-    .chip.on { background: var(--gold); border-color: var(--gold); color: #000; }
+    .chip:hover { color: var(--text); border-color: rgba(255,255,255,0.16); }
+    .chip.on { background: var(--gold); border-color: var(--gold); color: #0b0b13; font-weight: 600; }
 
-    .list-header {
-      flex-shrink: 0;
-      padding: 10px 16px 6px;
-      font-size: 0.68rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
+    .list-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+    .list-scroll::-webkit-scrollbar { width: 3px; }
+    .list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
 
-    .list {
-      overflow-y: auto;
-      flex: 1;
-      padding: 0 12px 14px;
-    }
-    .list::-webkit-scrollbar { width: 3px; }
-    .list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    /* ── Show card ───────────────────────────────────── */
+    /* ── Card ── */
     .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 13px 14px;
-      margin-bottom: 9px;
-      cursor: pointer;
-      transition: border-color 0.18s, transform 0.18s, background 0.18s;
-      position: relative;
+      position: relative; overflow: hidden;
+      background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+      padding: 13px 14px 11px; margin-bottom: 8px; cursor: pointer;
+      transition: border-color 0.2s, transform 0.18s, background 0.2s;
     }
     .card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 3px;
-      background: var(--accent, var(--gold));
-      border-radius: 10px 0 0 10px;
-      opacity: 0;
-      transition: opacity 0.18s;
+      content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--cc); border-radius: 3px 0 0 3px;
     }
-    .card:hover { border-color: rgba(201,168,76,0.35); transform: translateX(3px); }
-    .card:hover::before { opacity: 1; }
-    .card.active {
-      border-color: rgba(201,168,76,0.45);
-      background: #1c1b2c;
-    }
-    .card.active::before { opacity: 1; }
+    .card:hover { border-color: rgba(255,255,255,0.13); transform: translateX(2px); }
+    .card.active { border-color: var(--cc); background: rgba(255,255,255,0.03); }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 8px;
-      margin-bottom: 5px;
-    }
-    .card-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 1rem;
-      font-weight: 600;
-      line-height: 1.2;
-    }
+    .card-row1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 5px; }
+    .card-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
     .badge {
-      font-size: 0.62rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 3px 8px;
-      border-radius: 12px;
-      flex-shrink: 0;
-      white-space: nowrap;
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 2px 8px; border-radius: 10px; white-space: nowrap; flex-shrink: 0;
+      background: var(--cc); color: rgba(255,255,255,0.92);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.4);
     }
-
-    .card-theater {
-      font-size: 0.78rem;
-      color: var(--gold);
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 3px;
-    }
-    .card-addr {
-      font-size: 0.7rem;
-      color: var(--muted);
-      margin-bottom: 7px;
-    }
+    .card-venue { font-size: 12px; color: var(--muted); margin-bottom: 5px; }
     .card-desc {
-      font-size: 0.76rem;
-      color: var(--subtle);
-      line-height: 1.55;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
+      font-size: 12px; color: var(--muted); line-height: 1.55;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .card-foot { font-size: 11px; color: var(--muted); }
+
+    .no-results { text-align: center; padding: 52px 16px; color: var(--muted); }
+    .no-results .nr-icon { font-size: 34px; margin-bottom: 10px; }
+    .no-results .nr-msg { font-size: 13px; }
+
+    .sb-foot {
+      padding: 8px 14px; border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted); text-align: center; flex-shrink: 0;
     }
 
-    /* ── Empty state ─────────────────────────────────── */
-    .empty {
-      text-align: center;
-      padding: 48px 20px;
-      color: var(--muted);
-    }
-    .empty .e-icon { font-size: 2.5rem; display: block; margin-bottom: 12px; }
-    .empty p { font-size: 0.85rem; }
+    /* ── Map ── */
+    #map { flex: 1; }
 
-    /* ── Disclaimer ──────────────────────────────────── */
-    .disclaimer {
-      flex-shrink: 0;
-      padding: 8px 14px;
-      font-size: 0.64rem;
-      color: #484860;
-      border-top: 1px solid var(--border);
-      text-align: center;
-      line-height: 1.5;
-    }
-    .disclaimer a { color: #6a6a88; text-decoration: underline; }
-
-    /* ── Map ─────────────────────────────────────────── */
-    #map { width: 100%; height: 100%; }
-
-    /* ── Leaflet popup override ───────────────────────── */
+    /* ── Leaflet overrides ── */
     .leaflet-popup-content-wrapper {
-      background: #181826 !important;
-      border: 1px solid rgba(201,168,76,0.35) !important;
-      border-radius: 10px !important;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
+      background: #141421 !important; border-radius: 12px !important;
+      border: 1px solid rgba(212,175,55,0.22) !important;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.75) !important;
       color: var(--text) !important;
     }
-    .leaflet-popup-tip { background: #181826 !important; }
-    .leaflet-popup-close-button { color: var(--muted) !important; font-size: 18px !important; }
-    .leaflet-popup-content { margin: 14px 18px !important; }
+    .leaflet-popup-tip { background: #141421 !important; }
+    .leaflet-popup-close-button { color: var(--muted) !important; font-size: 16px !important; top: 8px !important; right: 8px !important; }
+    .leaflet-popup-content { margin: 14px 16px !important; }
 
-    .pop h3 {
-      font-family: 'Playfair Display', serif;
-      font-size: 1rem;
-      color: #e8d89a;
-      margin-bottom: 5px;
-      line-height: 1.2;
-    }
-    .pop .p-theater { font-size: 0.78rem; color: var(--gold); margin-bottom: 3px; }
-    .pop .p-addr   { font-size: 0.7rem;  color: var(--muted); margin-bottom: 8px; }
-    .pop .p-badge  {
-      font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.06em; padding: 3px 8px; border-radius: 12px;
-    }
+    .pop-genre { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
+    .pop-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--gold-lt); line-height: 1.15; margin-bottom: 4px; }
+    .pop-venue { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+    .pop-addr { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+    .pop-desc { font-size: 13px; color: #b0b0cc; line-height: 1.55; margin-bottom: 10px; max-width: 260px; }
+    .pop-sched { font-size: 12px; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.07); padding-top: 9px; }
 
-    /* ── Responsive ──────────────────────────────────── */
     @media (max-width: 700px) {
-      body { overflow: auto; }
-      .layout { grid-template-columns: 1fr; grid-template-rows: 55vw auto; height: auto; }
-      #map { height: 55vw; min-height: 260px; }
-      .side { border-right: none; border-top: 1px solid var(--border); max-height: 480px; }
+      html, body { overflow: auto; }
+      .app { flex-direction: column; height: auto; }
+      .sidebar { width: 100%; max-height: 56vh; }
+      #map { flex: none; height: 44vh; min-height: 280px; }
+      .header-note { display: none; }
     }
   </style>
 </head>
 <body>
 
 <header>
-  <div class="hd-left">
-    <div class="hd-icon">🎭</div>
-    <div class="hd-title">
-      <h1>Broadway NYC</h1>
-      <p>Current Shows &amp; Theater Locations</p>
-    </div>
+  <div class="logo">
+    <span class="logo-mark">🎭</span>
+    <div class="logo-text">Broadway NYC <span>Theater Map</span></div>
   </div>
-  <div class="hd-right">
-    <strong id="total-count">0</strong>
-    shows on Broadway
-    <div class="notice">⚠ Example data — verify at BroadwayWorld.com</div>
-  </div>
+  <div class="header-note">Sample data · Verify at broadwayworld.com</div>
 </header>
 
-<div class="layout">
-  <aside class="side">
-    <div class="controls">
-      <div class="search-row">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sb-top">
+      <div class="count-label" id="count-label">Broadway Shows</div>
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
         </svg>
-        <input type="text" id="search" placeholder="Search shows or theaters…">
+        <input id="search" type="search" placeholder="Search shows or theaters…">
       </div>
-      <div class="chips" id="chips">
-        <button class="chip on" data-g="all">All</button>
-        <button class="chip" data-g="Musical">Musicals</button>
-        <button class="chip" data-g="Play">Plays</button>
-        <button class="chip" data-g="Revival">Revivals</button>
+      <div class="chips">
+        <button class="chip on" data-g="All">All</button>
+        <button class="chip" data-g="Musical">Musical</button>
+        <button class="chip" data-g="Play">Play</button>
+        <button class="chip" data-g="Family">Family</button>
       </div>
     </div>
-    <div class="list-header" id="list-label">All Shows</div>
-    <div class="list" id="list"></div>
-    <div class="disclaimer">
-      Listings are illustrative examples — dates &amp; shows may have changed.<br>
-      For current info visit <a href="#" onclick="return false">broadwayworld.com</a>
-    </div>
+    <div class="list-scroll" id="list"></div>
+    <div class="sb-foot">⚡ Illustrative sample · Always verify current showtimes</div>
   </aside>
 
   <div id="map"></div>
@@ -355,292 +186,271 @@
 <script>
 const SHOWS = [
   {
-    id:1, title:"The Lion King",
-    theater:"Minskoff Theatre", address:"200 W 45th St",
-    genre:"Musical",
-    desc:"Disney's beloved story of Simba's journey, brought to life with breathtaking puppetry, costumes, and African musical influences. Running since 1997 — the longest-running show on Broadway.",
-    lat:40.7588, lng:-73.9862, color:"#F5A623",
+    id: 1, title: "Hamilton",
+    venue: "Richard Rodgers Theatre", address: "226 W 46th St, New York, NY",
+    genre: "Musical",
+    desc: "The story of America's Founding Father Alexander Hamilton—told through hip-hop, jazz, blues, and R&B. The show that changed Broadway.",
+    sched: "Tue–Sun · Matinees Wed & Sat",
+    color: "#4A90D9", lat: 40.7598, lng: -73.9853
   },
   {
-    id:2, title:"Chicago",
-    theater:"Ambassador Theatre", address:"219 W 49th St",
-    genre:"Revival",
-    desc:"The longest-running American musical revival in Broadway history. Murder, jazz, and razzle-dazzle in Prohibition-era Chicago. Continuously running since 1996.",
-    lat:40.7617, lng:-73.9876, color:"#E04444",
+    id: 2, title: "The Lion King",
+    venue: "Minskoff Theatre", address: "200 W 45th St, New York, NY",
+    genre: "Family",
+    desc: "Disney's beloved tale of Simba brought alive with breathtaking puppetry, costumes, and an iconic score. A family favorite for decades.",
+    sched: "Tue–Sun · Matinees Wed, Sat & Sun",
+    color: "#F0882A", lat: 40.7585, lng: -73.9865
   },
   {
-    id:3, title:"Aladdin",
-    theater:"New Amsterdam Theatre", address:"214 W 42nd St",
-    genre:"Musical",
-    desc:"The Disney animated classic transformed into a spectacular stage musical, bursting with magic, humor, and the iconic showstopper 'A Whole New World.'",
-    lat:40.7566, lng:-73.9878, color:"#2196F3",
+    id: 3, title: "Hadestown",
+    venue: "Walter Kerr Theatre", address: "219 W 48th St, New York, NY",
+    genre: "Musical",
+    desc: "Two intertwining love stories—Orpheus & Eurydice, Hades & Persephone—set to electrifying folk-jazz. Eight-time Tony Award winner.",
+    sched: "Tue–Sun · Matinees Wed & Sat",
+    color: "#C8952A", lat: 40.7608, lng: -73.9869
   },
   {
-    id:4, title:"Hamilton",
-    theater:"Richard Rodgers Theatre", address:"226 W 46th St",
-    genre:"Musical",
-    desc:"Lin-Manuel Miranda's Pulitzer Prize–winning hip-hop musical charting the meteoric rise of Alexander Hamilton, America's most unlikely founding father.",
-    lat:40.7597, lng:-73.9878, color:"#7B68EE",
+    id: 4, title: "Moulin Rouge!",
+    venue: "Al Hirschfeld Theatre", address: "302 W 45th St, New York, NY",
+    genre: "Musical",
+    desc: "A dazzling celebration of truth, beauty, freedom, and love in turn-of-the-century Paris. A pop-song spectacular like no other.",
+    sched: "Tue–Sun · Matinees Wed & Sat",
+    color: "#E04070", lat: 40.7588, lng: -73.9882
   },
   {
-    id:5, title:"Hadestown",
-    theater:"Walter Kerr Theatre", address:"219 W 48th St",
-    genre:"Musical",
-    desc:"Anaïs Mitchell's Tony Award–winning musical weaving together two mythic love stories — Orpheus & Eurydice set against the backdrop of a Depression-era Underworld.",
-    lat:40.7611, lng:-73.9875, color:"#8B6914",
+    id: 5, title: "Chicago",
+    venue: "Ambassador Theatre", address: "219 W 49th St, New York, NY",
+    genre: "Musical",
+    desc: "The longest-running American musical in Broadway history. Jazz Age glam, murder, and acquittal in the Windy City—still electric after decades.",
+    sched: "Tue–Sun · Matinees Wed, Sat & Sun",
+    color: "#9898C0", lat: 40.7613, lng: -73.9867
   },
   {
-    id:6, title:"Six",
-    theater:"Lunt-Fontanne Theatre", address:"205 W 46th St",
-    genre:"Musical",
-    desc:"Henry VIII's six wives retell their stories through a dazzling, pop-concert spectacular, competing to be crowned the queen with the most compelling tale.",
-    lat:40.7595, lng:-73.9872, color:"#D4145A",
+    id: 6, title: "Aladdin",
+    venue: "New Amsterdam Theatre", address: "214 W 42nd St, New York, NY",
+    genre: "Family",
+    desc: "A whole new world of magic, spectacle, and showstopping song. Disney's animated classic reimagined with Broadway dazzle.",
+    sched: "Tue–Sun · Matinees Wed, Sat & Sun",
+    color: "#28A8D8", lat: 40.7560, lng: -73.9879
   },
   {
-    id:7, title:"Sunset Boulevard",
-    theater:"St. James Theatre", address:"246 W 44th St",
-    genre:"Revival",
-    desc:"Andrew Lloyd Webber's classic tale of faded Hollywood stardom, reimagined in a thrilling contemporary staging with a star-making central performance.",
-    lat:40.7583, lng:-73.9893, color:"#9C27B0",
+    id: 7, title: "Wicked",
+    venue: "Gershwin Theatre", address: "222 W 51st St, New York, NY",
+    genre: "Musical",
+    desc: "The untold story of the witches of Oz—the unlikely friendship between Glinda and Elphaba—long before Dorothy ever arrived.",
+    sched: "Wed–Mon · Matinees Sat & Sun",
+    color: "#44B860", lat: 40.7629, lng: -73.9840
   },
   {
-    id:8, title:"The Outsiders",
-    theater:"Bernard B. Jacobs Theatre", address:"242 W 45th St",
-    genre:"Musical",
-    desc:"A bold, kinetic new musical adaptation of S.E. Hinton's classic novel, following rival Greasers and Socs in 1960s Tulsa with an electrifying, genre-defying score.",
-    lat:40.7590, lng:-73.9891, color:"#4CAF50",
+    id: 8, title: "Into the Woods",
+    venue: "St. James Theatre", address: "246 W 44th St, New York, NY",
+    genre: "Musical",
+    desc: "Sondheim's beloved fairy-tale mashup: Cinderella, Jack, Rapunzel, and more collide in a darkly funny meditation on wishes and consequences.",
+    sched: "Wed–Mon · Matinees Wed & Sat",
+    color: "#7B68EE", lat: 40.7583, lng: -73.9884
   },
   {
-    id:9, title:"Maybe Happy Ending",
-    theater:"Belasco Theatre", address:"111 W 44th St",
-    genre:"Musical",
-    desc:"A heartfelt musical set in a near-future Seoul, following two obsolete helper robots who discover what it means to be alive — and to fall in love — in a world moving on without them.",
-    lat:40.7581, lng:-73.9851, color:"#3F51B5",
+    id: 9, title: "Sweeney Todd",
+    venue: "Lunt-Fontanne Theatre", address: "205 W 46th St, New York, NY",
+    genre: "Musical",
+    desc: "Sondheim's razor-sharp thriller about obsession and revenge. The demon barber of Fleet Street in a gripping, intimate revival.",
+    sched: "Tue–Sun · Matinees Wed & Sat",
+    color: "#C84848", lat: 40.7597, lng: -73.9865
   },
   {
-    id:10, title:"Suffs",
-    theater:"Music Box Theatre", address:"239 W 45th St",
-    genre:"Musical",
-    desc:"Shaina Taub's Pulitzer-cited musical charting the American women's suffrage movement, tracing the fierce, complicated fight for the right to vote.",
-    lat:40.7589, lng:-73.9888, color:"#009688",
+    id: 10, title: "Appropriate",
+    venue: "Hayes Theater", address: "240 W 44th St, New York, NY",
+    genre: "Play",
+    desc: "A riveting family drama confronting a dark Southern legacy unearthed after a patriarch's death. Tony Award winner for Best Play.",
+    sched: "Thu–Mon · Matinees Sat & Sun",
+    color: "#D4A050", lat: 40.7583, lng: -73.9875
   },
   {
-    id:11, title:"Stereophonic",
-    theater:"Hayes Theater", address:"240 W 44th St",
-    genre:"Play",
-    desc:"David Adjmi's Pulitzer Prize–winning play set inside a recording studio in the 1970s, exploring art, ambition, and the bonds that form — and fracture — between collaborators.",
-    lat:40.7582, lng:-73.9886, color:"#FF5722",
+    id: 11, title: "Stereophonic",
+    venue: "Lyceum Theatre", address: "149 W 45th St, New York, NY",
+    genre: "Play",
+    desc: "A sweeping play about a rock band recording an album in the 1970s—ambition, creativity, and the corrosive price of fame.",
+    sched: "Wed–Mon · Matinees Sat & Sun",
+    color: "#B060D0", lat: 40.7581, lng: -73.9849
   },
   {
-    id:12, title:"Appropriate",
-    theater:"Lyceum Theatre", address:"149 W 45th St",
-    genre:"Play",
-    desc:"Branden Jacobs-Jenkins' Pulitzer Prize–winning drama following a Southern family that unearths a disturbing album while settling an estate, forcing a reckoning with history.",
-    lat:40.7587, lng:-73.9857, color:"#607D8B",
-  },
-  {
-    id:13, title:"Gypsy",
-    theater:"Majestic Theatre", address:"245 W 44th St",
-    genre:"Revival",
-    desc:"Jule Styne and Stephen Sondheim's landmark musical, this revival starring Audra McDonald as the ultimate stage mother, Mama Rose, driving her daughters toward stardom.",
-    lat:40.7581, lng:-73.9891, color:"#E91E63",
-  },
-  {
-    id:14, title:"Merrily We Roll Along",
-    theater:"Hudson Theatre", address:"141 W 44th St",
-    genre:"Revival",
-    desc:"Stephen Sondheim's poignant musical told in reverse chronology — beginning with failure, ending with the unblemished hope of youth — exploring friendship and the cost of ambition.",
-    lat:40.7581, lng:-73.9857, color:"#FF9800",
-  },
-  {
-    id:15, title:"Back to the Future",
-    theater:"Winter Garden Theatre", address:"1634 Broadway",
-    genre:"Musical",
-    desc:"The beloved time-traveling film leaps from screen to stage in this spectacular West End smash hit, filled with iconic moments, 80s anthems, and dazzling theatrical invention.",
-    lat:40.7617, lng:-73.9841, color:"#00BCD4",
-  },
-  {
-    id:16, title:"Once Upon a Mattress",
-    theater:"St. James Theatre", address:"246 W 44th St",
-    genre:"Revival",
-    desc:"The beloved fairy-tale comedy returns to Broadway with a fresh, vibrant revival of this Tony Award–winning musical comedy classic, full of charm and showstopping numbers.",
-    lat:40.7583, lng:-73.9895, color:"#CDDC39",
-  },
-  {
-    id:17, title:"Othello",
-    theater:"Nederlander Theatre", address:"208 W 41st St",
-    genre:"Play",
-    desc:"A powerful new production of Shakespeare's timeless tragedy of jealousy, manipulation, and race, reimagined for contemporary audiences with a magnetic leading performance.",
-    lat:40.7557, lng:-73.9884, color:"#795548",
-  },
-  {
-    id:18, title:"Into the Woods",
-    theater:"St. James Theatre", address:"246 W 44th St",
-    genre:"Revival",
-    desc:"Stephen Sondheim and James Lapine's beloved musical fairy-tale mashup, exploring what happens after 'happily ever after' with wit, darkness, and soaring music.",
-    lat:40.7585, lng:-73.9897, color:"#8BC34A",
+    id: 12, title: "The Notebook",
+    venue: "Schoenfeld Theatre", address: "236 W 45th St, New York, NY",
+    genre: "Musical",
+    desc: "Nicholas Sparks' timeless love story on stage, following Noah and Allie across the decades with a sweeping Americana-folk score.",
+    sched: "Tue–Sun · Matinees Wed & Sat",
+    color: "#4898D8", lat: 40.7587, lng: -73.9870
   },
 ];
 
-// Deduplicate geo positions that overlap
-const positionCount = {};
-SHOWS.forEach(s => {
-  const key = `${s.lat},${s.lng}`;
-  positionCount[key] = (positionCount[key] || 0) + 1;
-});
-const positionOffset = {};
-SHOWS.forEach(s => {
-  const key = `${s.lat},${s.lng}`;
-  if (positionCount[key] > 1) {
-    positionOffset[key] = positionOffset[key] || 0;
-    const angle = (positionOffset[key] / positionCount[key]) * 2 * Math.PI;
-    s._lat = s.lat + Math.sin(angle) * 0.00012;
-    s._lng = s.lng + Math.cos(angle) * 0.00012;
-    positionOffset[key]++;
-  } else {
-    s._lat = s.lat;
-    s._lng = s.lng;
-  }
-});
+// ── State ──────────────────────────────────────────────
+let activeId = null;
+let activeGenre = 'All';
+let searchQ = '';
+const markers = {};
 
-const GENRE_STYLE = {
-  Musical: { bg:'rgba(201,168,76,0.15)',  border:'#c9a84c', text:'#c9a84c' },
-  Play:    { bg:'rgba(144,164,174,0.15)', border:'#78909c', text:'#90a4ae' },
-  Revival: { bg:'rgba(206,147,216,0.15)', border:'#9c27b0', text:'#ce93d8' },
-  Special: { bg:'rgba(239,154,154,0.15)', border:'#e57373', text:'#ef9a9a' },
-};
-const gs = g => GENRE_STYLE[g] || GENRE_STYLE.Musical;
-
-// ── Map ──────────────────────────────────────────────
-const map = L.map('map', { center:[40.7592,-73.987], zoom:15 });
+// ── Map setup ─────────────────────────────────────────
+const map = L.map('map', {
+  center: [40.7592, -73.9865],
+  zoom: 15,
+  zoomControl: false,
+});
 
 L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-  attribution:'© OpenStreetMap © CARTO',
-  maxZoom:19,
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: 'abcd', maxZoom: 20
 }).addTo(map);
 
-// ── Markers ──────────────────────────────────────────
-const markerMap = {};
+L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-SHOWS.forEach(show => {
-  const html = `<div style="
-    width:26px;height:26px;
-    background:${show.color};
-    border-radius:50% 50% 50% 0;
-    transform:rotate(-45deg);
-    border:2px solid rgba(255,255,255,0.45);
-    box-shadow:0 3px 14px rgba(0,0,0,0.55);
-  "></div>`;
-
-  const icon = L.divIcon({ html, className:'', iconSize:[26,26], iconAnchor:[13,26], popupAnchor:[0,-28] });
-  const { bg,border,text } = gs(show.genre);
-  const popup = `
-    <div class="pop">
-      <h3>${show.title}</h3>
-      <div class="p-theater">🎭 ${show.theater}</div>
-      <div class="p-addr">📍 ${show.address}</div>
-      <span class="p-badge" style="background:${bg};color:${text};border:1px solid ${border}">${show.genre}</span>
-    </div>`;
-
-  const marker = L.marker([show._lat, show._lng], { icon })
-    .bindPopup(popup, { maxWidth:210 })
-    .addTo(map);
-
-  marker.on('click', () => focusCard(show.id));
-  markerMap[show.id] = marker;
-});
-
-// ── State ────────────────────────────────────────────
-let activeGenre = 'all';
-let searchQ     = '';
-let activeId    = null;
-
-function filtered() {
-  return SHOWS.filter(s => {
-    const gOk = activeGenre === 'all' || s.genre === activeGenre;
-    const q   = searchQ.toLowerCase();
-    const sOk = !q || s.title.toLowerCase().includes(q) || s.theater.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q);
-    return gOk && sOk;
+// ── Marker factory ────────────────────────────────────
+function mkIcon(show, active) {
+  const sz = active ? 44 : 36;
+  const ring = active
+    ? `0 0 0 5px ${show.color}44, 0 3px 14px rgba(0,0,0,0.65)`
+    : '0 2px 10px rgba(0,0,0,0.55)';
+  const border = active ? '2.5px solid rgba(255,255,255,0.9)' : '2px solid rgba(255,255,255,0.32)';
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:${sz}px;height:${sz}px;border-radius:50%;
+      background:${show.color};border:${border};
+      box-shadow:${ring};
+      display:flex;align-items:center;justify-content:center;
+      font-size:${active ? 20 : 17}px;
+      transition:all 0.25s;
+    ">🎭</div>`,
+    iconSize: [sz, sz],
+    iconAnchor: [sz/2, sz/2],
+    popupAnchor: [0, -(sz/2 + 4)]
   });
 }
 
-function render() {
-  const shows = filtered();
-  const list  = document.getElementById('list');
-  const label = document.getElementById('list-label');
+// ── Popup HTML ────────────────────────────────────────
+function popupHTML(s) {
+  return `<div>
+    <div class="pop-genre" style="color:${s.color}">${s.genre}</div>
+    <div class="pop-title">${s.title}</div>
+    <div class="pop-venue">📍 ${s.venue}</div>
+    <div class="pop-addr">${s.address}</div>
+    <div class="pop-desc">${s.desc}</div>
+    <div class="pop-sched">🕐 ${s.sched}</div>
+  </div>`;
+}
 
-  label.textContent = shows.length === SHOWS.length
-    ? `All Shows (${SHOWS.length})`
-    : `${shows.length} of ${SHOWS.length} Shows`;
+// ── Add markers ───────────────────────────────────────
+SHOWS.forEach(s => {
+  const m = L.marker([s.lat, s.lng], { icon: mkIcon(s, false) })
+    .addTo(map)
+    .bindPopup(popupHTML(s), { maxWidth: 300, className: '' });
 
-  // Toggle markers
-  const visibleIds = new Set(shows.map(s => s.id));
-  SHOWS.forEach(s => {
-    const m = markerMap[s.id];
-    if (visibleIds.has(s.id)) { if (!map.hasLayer(m)) m.addTo(map); }
-    else                       { if (map.hasLayer(m))  map.removeLayer(m); }
+  m.on('click', () => selectShow(s.id, false));
+  m.on('popupopen', () => {
+    // highlight card without flying again
+    activeId = s.id;
+    syncCards();
   });
+  markers[s.id] = m;
+});
 
-  if (!shows.length) {
-    list.innerHTML = `<div class="empty"><span class="e-icon">🎭</span><p>No shows match your search.</p></div>`;
-    return;
+// ── Select a show ─────────────────────────────────────
+function selectShow(id, fromCard = true) {
+  const prev = activeId;
+  activeId = id;
+
+  // refresh marker icons
+  if (prev && markers[prev]) {
+    const ps = SHOWS.find(x => x.id === prev);
+    if (ps) markers[prev].setIcon(mkIcon(ps, false));
+  }
+  const s = SHOWS.find(x => x.id === id);
+  if (markers[id]) markers[id].setIcon(mkIcon(s, true));
+
+  if (fromCard) {
+    map.flyTo([s.lat, s.lng], 16, { duration: 0.9 });
+    setTimeout(() => {
+      if (markers[id] && map.hasLayer(markers[id])) markers[id].openPopup();
+    }, 750);
   }
 
-  list.innerHTML = shows.map(s => {
-    const { bg,border,text } = gs(s.genre);
-    return `
-    <div class="card ${activeId===s.id?'active':''}" data-id="${s.id}" style="--accent:${s.color}">
-      <div class="card-top">
-        <div class="card-title">${s.title}</div>
-        <span class="badge" style="background:${bg};color:${text};border:1px solid ${border}">${s.genre}</span>
-      </div>
-      <div class="card-theater">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        </svg>
-        ${s.theater}
-      </div>
-      <div class="card-addr">${s.address}</div>
-      <div class="card-desc">${s.desc}</div>
-    </div>`;
-  }).join('');
+  syncCards();
+}
 
-  document.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => {
-      const id   = parseInt(card.dataset.id, 10);
-      const show = SHOWS.find(s => s.id === id);
-      activeId   = id;
-      render();
-      map.flyTo([show._lat, show._lng], 17, { duration:0.7 });
-      markerMap[id].openPopup();
-    });
+function syncCards() {
+  document.querySelectorAll('.card').forEach(el => {
+    el.classList.toggle('active', +el.dataset.id === activeId);
+  });
+  const active = document.querySelector(`.card[data-id="${activeId}"]`);
+  if (active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// ── Filter + render list ──────────────────────────────
+function visible() {
+  const q = searchQ.toLowerCase();
+  return SHOWS.filter(s => {
+    const gOk = activeGenre === 'All' || s.genre === activeGenre;
+    const qOk = !q || s.title.toLowerCase().includes(q) || s.venue.toLowerCase().includes(q);
+    return gOk && qOk;
   });
 }
 
-function focusCard(id) {
-  activeId = id;
-  render();
-  const el = document.querySelector(`.card[data-id="${id}"]`);
-  if (el) el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+function renderList() {
+  const shows = visible();
+  const listEl = document.getElementById('list');
+  const label = document.getElementById('count-label');
+
+  label.textContent = shows.length === SHOWS.length
+    ? `${SHOWS.length} Shows on Broadway`
+    : `${shows.length} of ${SHOWS.length} Shows`;
+
+  if (!shows.length) {
+    listEl.innerHTML = `<div class="no-results">
+      <div class="nr-icon">🎭</div>
+      <div class="nr-msg">No shows match your search.</div>
+    </div>`;
+  } else {
+    listEl.innerHTML = shows.map(s => `
+      <div class="card ${activeId === s.id ? 'active' : ''}" data-id="${s.id}" style="--cc:${s.color}">
+        <div class="card-row1">
+          <div class="card-title">${s.title}</div>
+          <div class="badge" style="background:${s.color}">${s.genre}</div>
+        </div>
+        <div class="card-venue">📍 ${s.venue} &middot; ${s.address.split(',')[0]}</div>
+        <div class="card-desc">${s.desc}</div>
+        <div class="card-foot">🕐 ${s.sched}</div>
+      </div>
+    `).join('');
+
+    listEl.querySelectorAll('.card').forEach(el => {
+      el.addEventListener('click', () => selectShow(+el.dataset.id, true));
+    });
+  }
+
+  // sync marker visibility
+  SHOWS.forEach(s => {
+    const show = shows.some(x => x.id === s.id);
+    if (show && !map.hasLayer(markers[s.id])) markers[s.id].addTo(map);
+    if (!show && map.hasLayer(markers[s.id])) map.removeLayer(markers[s.id]);
+  });
 }
 
-// ── Controls ─────────────────────────────────────────
-document.getElementById('chips').addEventListener('click', e => {
-  const chip = e.target.closest('.chip');
-  if (!chip) return;
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  chip.classList.add('on');
-  activeGenre = chip.dataset.g;
-  render();
-});
-
+// ── Listeners ─────────────────────────────────────────
 document.getElementById('search').addEventListener('input', e => {
   searchQ = e.target.value;
-  render();
+  renderList();
 });
 
-document.getElementById('total-count').textContent = SHOWS.length;
-render();
+document.querySelectorAll('.chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    activeGenre = btn.dataset.g;
+    renderList();
+  });
+});
+
+// ── Boot ──────────────────────────────────────────────
+renderList();
 </script>
 </body>
 </html>
