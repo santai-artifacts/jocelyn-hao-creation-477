@@ -11,14 +11,14 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0b0b13;
-      --surface:   #12121e;
-      --surface2:  #191928;
-      --border:    rgba(255,255,255,0.07);
-      --gold:      #D4AF37;
-      --gold-lt:   #F0D060;
-      --text:      #ddddf0;
-      --muted:     #686888;
+      --bg:        #F5F5F7;
+      --surface:   #FFFFFF;
+      --surface2:  #F0F0F4;
+      --border:    rgba(0,0,0,0.09);
+      --accent:    #3730A3;
+      --accent-lt: #4F46E5;
+      --text:      #111118;
+      --muted:     #6B6B80;
       --sidebar:   360px;
     }
 
@@ -27,17 +27,18 @@
     /* ── Header ── */
     header {
       position: fixed; top: 0; left: 0; right: 0; height: 58px; z-index: 1000;
-      background: linear-gradient(105deg, #130228 0%, #27091c 55%, #140505 100%);
-      border-bottom: 1px solid rgba(212,175,55,0.18);
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--border);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
       display: flex; align-items: center; justify-content: space-between; padding: 0 22px;
     }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-mark { font-size: 26px; }
-    .logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--gold-lt); letter-spacing: -0.01em; }
-    .logo-text span { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 300; font-style: normal; color: var(--muted); margin-left: 8px; letter-spacing: 0; }
+    .logo-text { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700; color: var(--accent); letter-spacing: -0.01em; }
+    .logo-text span { font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 400; font-style: normal; color: var(--muted); margin-left: 8px; letter-spacing: 0; }
     .header-note {
       font-size: 11px; color: var(--muted);
-      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+      background: var(--surface2); border: 1px solid var(--border);
       border-radius: 20px; padding: 4px 14px;
     }
 
@@ -63,7 +64,7 @@
       color: var(--text); font-size: 13px; font-family: inherit; outline: none;
       transition: border-color 0.2s;
     }
-    .search-wrap input:focus { border-color: rgba(212,175,55,0.35); }
+    .search-wrap input:focus { border-color: var(--accent-lt); box-shadow: 0 0 0 3px rgba(79,70,229,0.12); }
     .search-wrap input::placeholder { color: var(--muted); }
 
     .chips { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -72,12 +73,12 @@
       background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
       cursor: pointer; transition: all 0.15s; font-family: inherit;
     }
-    .chip:hover { color: var(--text); border-color: rgba(255,255,255,0.16); }
-    .chip.on { background: var(--gold); border-color: var(--gold); color: #0b0b13; font-weight: 600; }
+    .chip:hover { color: var(--text); border-color: rgba(0,0,0,0.18); }
+    .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
 
     .list-scroll { flex: 1; overflow-y: auto; padding: 10px; }
     .list-scroll::-webkit-scrollbar { width: 3px; }
-    .list-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 2px; }
+    .list-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
 
     /* ── Card ── */
     .card {
@@ -91,7 +92,7 @@
       background: var(--cc); border-radius: 3px 0 0 3px;
     }
     .card:hover { border-color: rgba(255,255,255,0.13); transform: translateX(2px); }
-    .card.active { border-color: var(--cc); background: rgba(255,255,255,0.03); }
+    .card.active { border-color: var(--cc); background: rgba(79,70,229,0.04); }
 
     .card-row1 { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 5px; }
     .card-title { font-family: 'Playfair Display', serif; font-size: 15px; font-weight: 700; line-height: 1.2; }
@@ -123,21 +124,21 @@
 
     /* ── Leaflet overrides ── */
     .leaflet-popup-content-wrapper {
-      background: #141421 !important; border-radius: 12px !important;
-      border: 1px solid rgba(212,175,55,0.22) !important;
-      box-shadow: 0 16px 48px rgba(0,0,0,0.75) !important;
-      color: var(--text) !important;
+      background: #FFFFFF !important; border-radius: 12px !important;
+      border: 1px solid rgba(0,0,0,0.1) !important;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18) !important;
+      color: #111118 !important;
     }
-    .leaflet-popup-tip { background: #141421 !important; }
-    .leaflet-popup-close-button { color: var(--muted) !important; font-size: 16px !important; top: 8px !important; right: 8px !important; }
+    .leaflet-popup-tip { background: #FFFFFF !important; }
+    .leaflet-popup-close-button { color: #6B6B80 !important; font-size: 16px !important; top: 8px !important; right: 8px !important; }
     .leaflet-popup-content { margin: 14px 16px !important; }
 
     .pop-genre { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 5px; }
-    .pop-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: var(--gold-lt); line-height: 1.15; margin-bottom: 4px; }
-    .pop-venue { font-size: 12px; color: var(--muted); margin-bottom: 2px; }
-    .pop-addr { font-size: 11px; color: var(--muted); margin-bottom: 10px; }
-    .pop-desc { font-size: 13px; color: #b0b0cc; line-height: 1.55; margin-bottom: 10px; max-width: 260px; }
-    .pop-sched { font-size: 12px; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.07); padding-top: 9px; }
+    .pop-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; color: #111118; line-height: 1.15; margin-bottom: 4px; }
+    .pop-venue { font-size: 12px; color: #6B6B80; margin-bottom: 2px; }
+    .pop-addr { font-size: 11px; color: #6B6B80; margin-bottom: 10px; }
+    .pop-desc { font-size: 13px; color: #444458; line-height: 1.55; margin-bottom: 10px; max-width: 260px; }
+    .pop-sched { font-size: 12px; color: #6B6B80; border-top: 1px solid rgba(0,0,0,0.08); padding-top: 9px; }
 
     @media (max-width: 700px) {
       html, body { overflow: auto; }
@@ -296,7 +297,7 @@ const map = L.map('map', {
   zoomControl: false,
 });
 
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
   subdomains: 'abcd', maxZoom: 20
 }).addTo(map);
